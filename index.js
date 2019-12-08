@@ -32,16 +32,8 @@ app.post('/item/create', function (req, res) {
     })
 })
 
-app.get('item/all', (req, res) => {
-    expense.find()
-    .then(data =>{
-        res.send(data)
-    }).catch(err => {
-        res.send(err.message)
-    })    
-})
-
 app.get('/item/retrieve/all', function (req, res) {
+    console.log("All")
     expense.find()
     .then(doc => {
         res.send(doc)
@@ -77,8 +69,10 @@ console.log(req.body)
 })
 
 app.delete('/item/delete/:id', function (req, res) {
-    expense.findOneAndDelete(req.params.id)
+    console.log(req.params.id)
+    expense.findByIdAndRemove(req.params.id)
     .then(doc => {
+        console.log("Nadelete na")
         res.send(doc)
     })
     .catch(err => {

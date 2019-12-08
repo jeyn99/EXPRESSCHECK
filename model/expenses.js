@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const validator = require('mongoose-unique-validator')
 const Schema = mongoose.Schema;
 
     mongoose.connect('mongodb://localhost:27017/expenses', { useNewUrlParser: true, useUnifiedTopology: true });

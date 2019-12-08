@@ -94,12 +94,12 @@ export default {
       ID: null,
       item: "",
       date: new Date(),
-      amount: 0
+      amount: null
     },
     defaultItem: {
       item: "",
       date: new Date(),
-      amount: 0
+      amount: null
     },
     checkerItem: {
       _id: null,
@@ -150,25 +150,25 @@ export default {
 
     deleteItem(item) {
       const index = this.expenses.indexOf(item);
+      // console.log(item)
       confirm("Are you sure you want to delete this item?") &&
         axios
-          .delete(
-            "http://localhost:5000/item/delete" + this.expenses[this.editedIndex]._id)
+          .delete("http://localhost:5000/item/delete/" + item._id)
           .then(res => {
-            alert("Succesfully Updated!");
+            alert("Succesfully Deleted!");
+            this.expenses.splice(index, 1);
           })
           .catch(err => {
             alert(err);
           });
-      this.expenses.splice(index, 1);
     },
 
     close() {
       this.dialog = false;
-      setTimeout(() => {
-        this.editedItem = Object.assign({}, this.defaultItem);
-        this.editedIndex = -1;
-      }, 300);
+      // setTimeout(() => {
+      //   this.editedItem = Object.assign({}, this.defaultItem);
+      //   this.editedIndex = -1;
+      // }, 300);
     },
 
     save() {
@@ -179,22 +179,27 @@ export default {
           this.expenses[this.editedIndex].amount != this.checkerItem.amount
         ) {
           //isave sa database
-          axios
-            .put(
-              "http://localhost:5000/item/update/",
-              this.expenses[this.editedIndex]
-            )
-            .then(res => {
-              alert("Succesfully Updated!");
-            })
-            .catch(err => {
-              alert(err);
-            });
+          console.log(this.expenses[this.editedIndex].amount < 0);
+          if (this.expenses[this.editedIndex].amount < 0) {
+            alert("Check Input");
+          } else {
+            axios
+              .put(
+                "http://localhost:5000/item/update/",
+              )
+              .then(res => {
+                alert("Succesfully Updated!");
+              })
+              .catch(err => {
+                alert(err);
+              });
+          }
         } else {
           //wala may na save ani na update
           alert("Fields not updated!");
         }
       } else {
+        console.log(this.editItem.item);
         this.expenses.push(this.editedItem);
         //save for the first time
         axios
@@ -207,6 +212,8 @@ export default {
             alert(err);
           });
       }
+      // created.apply(this)
+      // this.expenses = [];
       this.close();
     },
     checkID(id) {
