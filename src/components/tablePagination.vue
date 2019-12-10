@@ -4,13 +4,18 @@
       <v-data-table :headers="headers" :items="expenses" :search="search" class="elevation-1">
         <template v-slot:top>
           <v-toolbar flat color="white">
-            <v-toolbar-title>EXPENSE LIST</v-toolbar-title>
+            <v-toolbar-title>
+              EXPENSE LIST
+              <v-divider class="mx-4" inset vertical></v-divider>
+              <v-divider class="mx-4" inset vertical></v-divider>
+              TOTAL: {{ totalAmount }}
+            </v-toolbar-title>
             <v-divider class="mx-4" inset vertical></v-divider>
             <v-spacer></v-spacer>
             <v-dialog v-model="dialog" max-width="500px">
               <template v-slot:activator="{ on }">
                 <v-btn color="primary" class="xs-2 ma-4" v-on="on">ADD EXPENSE</v-btn>
-                <v-btn color="primary" @click="initialize" class="xs-2 ma-4">RESET</v-btn>
+                <v-btn color="primary" @click="reset" class="xs-2 ma-4">RESET</v-btn>
                 <v-spacer></v-spacer>
                 <v-text-field
                   v-model="search"
@@ -91,7 +96,7 @@ export default {
     totalAmount: 0,
     editedIndex: -1,
     editedItem: {
-      ID: null,
+      _id: null,
       item: "",
       date: new Date(),
       amount: null
@@ -122,24 +127,51 @@ export default {
 
   created() {
     this.initialize();
-    this.getAll();
+    this.getAll(true);
+    this.getAll(false)
   },
 
   methods: {
     initialize() {
       this.expenses = [];
     },
-    getAll() {
-      axios
-        .get("http://localhost:5000/item/retrieve/all")
-        .then(res => {
-          this.expenses = res.data;
-          this.totalAmount = this.totalAmount + Number(res.data.amount);
-          //trouble in adding all
-        })
-        .catch(err => {
-          alert(err);
-        });
+    reset() {
+      confirm("Are you sure to reset items? ") &&
+        axios
+          .delete("http://localhost:5000/delete/all")
+          .then(res => {
+            this.initialize();
+            this.totalAmount = 0;
+            alert("Reset");
+          })
+          .catch(err => {
+            alert(err);
+          });
+    },
+    getAll(d) {
+      if (d) {
+        console.log("This is All!")
+        axios
+          .get("http://localhost:5000/item/retrieve/all")
+          .then(res => {
+            this.expenses = res.data;
+          })
+          .catch(err => {
+            alert(err);
+          });
+      } else {
+        axios
+          .get("http://localhost:5000/item/retrieve/all")
+          .then(res => {
+            this.totalAmount = 0;
+            for (let i = 0; i < res.data.length; i++) {
+              this.totalAmount = this.totalAmount + Number(res.data[i].amount);
+            }
+          })
+          .catch(err => {
+            alert(err);
+          });
+      }
     },
     editItem(item) {
       this.editedIndex = this.expenses.indexOf(item);
@@ -165,10 +197,11 @@ export default {
 
     close() {
       this.dialog = false;
-      // setTimeout(() => {
-      //   this.editedItem = Object.assign({}, this.defaultItem);
-      //   this.editedIndex = -1;
-      // }, 300);
+      setTimeout(() => {
+        this.editedItem = Object.assign({}, this.defaultItem);
+        this.editedIndex = -1;
+      }, 300);
+      this.getAll(false);
     },
 
     save() {
@@ -179,41 +212,49 @@ export default {
           this.expenses[this.editedIndex].amount != this.checkerItem.amount
         ) {
           //isave sa database
-          console.log(this.expenses[this.editedIndex].amount < 0);
-          if (this.expenses[this.editedIndex].amount < 0) {
+          if (
+            this.expenses[this.editedIndex].amount < 0 &&
+            this.expenses[this.editedIndex].item != ""
+          ) {
+            this.expenses[this.editedIndex] = this.checkerItem;
             alert("Check Input");
           } else {
-            axios
-              .put(
-                "http://localhost:5000/item/update/",
-              )
-              .then(res => {
-                alert("Succesfully Updated!");
-              })
-              .catch(err => {
-                alert(err);
-              });
+            confirm("Are you sure to update this item? ") &&
+              axios
+                .put(
+                  "http://localhost:5000/item/update/",
+                  this.expenses[this.editedIndex]
+                )
+                .then(res => {
+                  alert("Succesfully Updated!");
+                })
+                .catch(err => {
+                  alert(err);
+                });
           }
         } else {
-          //wala may na save ani na update
+          this.expenses[this.editedIndex] = this.checkerItem;
           alert("Fields not updated!");
         }
       } else {
-        console.log(this.editItem.item);
-        this.expenses.push(this.editedItem);
         //save for the first time
-        axios
-          .post("http://localhost:5000/item/create", this.editedItem)
-          .then(res => {
-            this.checkerItem = res.data;
-            this.getAll();
-          })
-          .catch(err => {
-            alert(err);
-          });
+        console.log("Save for the first time");
+        let item = this.editedItem;
+        if (item.item != "" && item.amount > 0) {
+          axios
+            .post("http://localhost:5000/item/create", this.editedItem)
+            .then(res => {
+              this.expenses.push(res.data);
+              // this.checkerItem = res.data;
+            })
+            .catch(err => {
+              alert(err);
+            });
+        } else {
+          alert("Please Check Input!");
+        }
       }
-      // created.apply(this)
-      // this.expenses = [];
+      // window.location.reload();
       this.close();
     },
     checkID(id) {
