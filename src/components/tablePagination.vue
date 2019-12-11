@@ -102,6 +102,7 @@ export default {
       amount: null
     },
     defaultItem: {
+      _id: null,  
       item: "",
       date: new Date(),
       amount: null
@@ -160,6 +161,7 @@ export default {
             alert(err);
           });
       } else {
+        // console.log("False!")
         axios
           .get("http://localhost:5000/item/retrieve/all")
           .then(res => {
@@ -181,7 +183,9 @@ export default {
     },
 
     deleteItem(item) {
+      alert(JSON.stringify(item))
       const index = this.expenses.indexOf(item);
+      alert(index)
       // console.log(item)
       confirm("Are you sure you want to delete this item?") &&
         axios
@@ -202,6 +206,7 @@ export default {
         this.editedIndex = -1;
       }, 300);
       this.getAll(false);
+      // console.log("Here!")
     },
 
     save() {
@@ -216,7 +221,7 @@ export default {
             this.expenses[this.editedIndex].amount < 0 &&
             this.expenses[this.editedIndex].item != ""
           ) {
-            this.expenses[this.editedIndex] = this.checkerItem;
+            Object.assign(this.expenses[this.editedIndex], this.checkerItem);
             alert("Check Input");
           } else {
             confirm("Are you sure to update this item? ") &&
@@ -233,7 +238,6 @@ export default {
                 });
           }
         } else {
-          this.expenses[this.editedIndex] = this.checkerItem;
           alert("Fields not updated!");
         }
       } else {
@@ -251,6 +255,7 @@ export default {
               alert(err);
             });
         } else {
+          Object.assign(this.expenses[this.editedIndex], this.checkerItem);
           alert("Please Check Input!");
         }
       }
